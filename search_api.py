@@ -106,7 +106,7 @@ async def say_hello(keyword: str):
                 { "match": { 
                     "tags":  {
                     "query": keyword,
-                    "boost": 10
+                    "boost": 100
                 }}},
                 { "bool":  { 
                     "should": [
