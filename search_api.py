@@ -1,10 +1,11 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, status
 import tweepy
 from elasticsearch import Elasticsearch, RequestsHttpConnection
 from requests_aws4auth import AWS4Auth
 from fastapi.responses import JSONResponse
 from dotenv import load_dotenv
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel, Field
 import os 
 
 
@@ -54,6 +55,23 @@ es = Elasticsearch(
 )
 
 
+class Meme(BaseModel):
+    timestamp: str = Field(title="생성일")
+    id: int = Field(title="RDS id")
+    title: str = Field(title="제목")
+    description: str = Field(title="설명")
+    image_url: str = Field(title="이미지 URL")
+    tags: list[str] = Field(title="태그 목록")
+
+
+class SearchDto(BaseModel):
+    id: str = Field(title="index id")
+    index: str = Field(title="index name")
+    type: str = Field(title="index type")
+    score: float = Field(title="검색 결과 점수")
+    source: Meme = Field(title="밈 데이터")
+
+
 def create_index(_index):
     resp = es.indices.create(index=_index, body={
         "settings" : {
@@ -101,12 +119,14 @@ def clean_data(data):
     for d in data:
         if not d['_source']['tags']:
             d['_source']['tags'] = []
+        else:
+            d['_source']['tags'] = d['_source']['tags'][0].split(",")
 
     return data
 
 
-@app.get("/search")
-async def say_hello(keyword: str, offset: int = 0, limit: int = 10):
+@app.get(path="/search", description="검색 API", status_code=status.HTTP_200_OK, response_model=SearchDto)
+async def search(keyword: str, offset: int = 0, limit: int = 10):
     _index = "mm" # index name
 
     doc={
