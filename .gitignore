@@ -1,2 +1,4 @@
 .env
 meme-369708-e4bd2f8056f2.json
+__pycache__/
+.DS_Store

@@ -97,8 +97,16 @@ def create_index(_index):
     return resp
 
 
+def clean_data(data):
+    for d in data:
+        if not d['_source']['tags']:
+            d['_source']['tags'] = []
+
+    return data
+
+
 @app.get("/search")
-async def say_hello(keyword: str):
+async def say_hello(keyword: str, offset: int, limit: int):
     _index = "mm" # index name
 
     doc={
@@ -128,21 +136,18 @@ async def say_hello(keyword: str):
                 }}
             ]
             }
-        }
-        # "from": _from,
-        # "size": _size,
-        # "sort": [
-        #     {
-        #         "_score": "desc"
-        #     },
-        #     {
-        #         "id.keyword": "asc"
-        #     }
-        # ],
+        },
+        "from": offset,
+        "size": limit,
+        "sort": [
+            {
+                "_score": "desc"
+            }
+        ],
     }
 
-    res = es.search(index=_index, body=doc, size=10)
+    res = es.search(index=_index, body=doc)
     result = {
-        "data": res['hits']['hits']
+        "data": clean_data(res['hits']['hits'])
     }
     return JSONResponse(content=result)
