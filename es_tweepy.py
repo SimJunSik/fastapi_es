@@ -3,15 +3,20 @@ import time
 from konlpy.tag import Okt
 from elasticsearch import Elasticsearch, RequestsHttpConnection
 from requests_aws4auth import AWS4Auth
+from dotenv import load_dotenv
+import os 
+
+
+load_dotenv()
 
 class JJMemeTweepy():
     def __init__(self, target_screen_name) -> None:
         self.target_screen_name = target_screen_name
-        self.consumer_key = 'n1HCA9iFuVZP22iYohRNDCnnt'
-        self.consumer_secret = 'xg70Sxq8Zs751uyz16REjQ0Bbz8ItxplPKKijOXVHa7hjeFQqN'
-        self.access_token = '1596304595223216130-ZEf98Dx3fCYOfmqNzlNowbcPOXhFTf'
-        self.access_token_secret = 'HLs6eA9727tpWqIVIyXMii0u3UhBfJ2ASPEBC5DbmjHq9'
-        self.bearer_token = 'AAAAAAAAAAAAAAAAAAAAABP3jgEAAAAAFtDypjGNyGxac1DaNXKT5rpc6wY%3DxsIJTjmbpYPpud42QMtCrOf848xj0d16iZ011RnRhIh0qWLTic'
+        self.consumer_key = os.environ.get('CONSUMER_KEY')
+        self.consumer_secret = os.environ.get('CONSUMER_SECRET')
+        self.access_token = os.environ.get('ACCESS_TOKEN')
+        self.access_token_secret = os.environ.get('ACCESS_TOKEN_SECRET')
+        self.bearer_token = os.environ.get('BEARER_TOKEN')
 
     def connect_api(self):
         auth = tweepy.OAuthHandler(self.consumer_key, self.consumer_secret)
@@ -38,102 +43,7 @@ class JJMemeTweepy():
         return t_id
 
 if __name__ == "__main__":
-    AWS_ACCESS_KEY = 'AKIATQ6IHNLTSXLEHJHF'
-    AWS_SECRET_KEY = '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'
-    AWS_REGION = 'us-east-1'
-    AWS_SERVICE = 'es'
-
-    # HOST = 'search-jjmeme-5wcxkkzse5s7pmiu3ktrtk42ua.us-east-1.es.amazonaws.com'
-    HOST = 'search-jjmeme-2-2imf4txya2xoojk76omocvuptm.us-east-1.es.amazonaws.com'
-
-    awsauth = AWS4Auth(
-        AWS_ACCESS_KEY,
-        AWS_SECRET_KEY,
-        AWS_REGION,
-        AWS_SERVICE,
-    )
-
-    es = Elasticsearch(
-        hosts = [{'host': HOST, 'port': 443}],
-        http_auth = awsauth,
-        use_ssl = True,
-        verify_certs = True,
-        connection_class = RequestsHttpConnection,
-        timeout=30, max_retries=10, retry_on_timeout=True
-    )
-
-    _index = "mm" # index name
-
-    print(es)
-
-    doc={
-            "query": {
-                "bool": {
-                "should": [
-                    { "match": { 
-                        "title":  {
-                        "query": "test",
-                        "boost": 1
-                    }}},
-                    { "match": { 
-                        "tags":  {
-                        "query": "고양이",
-                        "boost": 10
-                    }}},
-                    { "bool":  { 
-                        "should": [
-                        { "match": { "translator": "Constance Garnett" }},
-                        { "match": { "translator": "Louise Maude"      }}
-                        ]
-                    }}
-                ]
-                }
-            }
-        }
-
-    res = es.search(index=_index, body=doc, size=10)
-
-    print(res['hits']['hits'])
-
-    # resp = es.indices.create(index=_index, body={
-    #     "settings" : {
-    #         "index":{
-    #             "analysis":{
-    #                 "analyzer" : {
-    #                     "korean" : {
-    #                         "type" : "custom",
-    #                         "tokenizer" : "seunjeon"
-    #                     }
-    #                 },
-    #                 "tokenizer" : {
-    #                     "seunjeon" : {
-    #                         "type" : "seunjeon_tokenizer"
-    #                     }
-    #                 }
-    #             }
-    #         }
-    #     },
-    #     "properties": {
-    #         "description": {
-    #             "type": "text",
-    #             "analyzer": "korean"
-    #         },
-    #         "title": {
-    #             "type": "text",
-    #             "analyzer": "korean"
-    #         },
-    #         "tags": {
-    #             "type": "text",
-    #             "analyzer": "korean"
-    #         },
-    #         "image_url": {
-    #             "type": "text"
-    #         }
-    #     }
-    # })
-
-    # print(resp)
-
+    pass
     # jj_meme = JJMemeTweepy("짤주워오는계정")
     # client = jj_meme.get_client()
     # t_id = jj_meme.get_id(screen_name='WkfxjfrP')
