@@ -106,7 +106,7 @@ def clean_data(data):
 
 
 @app.get("/search")
-async def say_hello(keyword: str, offset: int, limit: int):
+async def say_hello(keyword: str, offset: int = 0, limit: int = 10):
     _index = "mm" # index name
 
     doc={
