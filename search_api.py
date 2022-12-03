@@ -4,6 +4,7 @@ from elasticsearch import Elasticsearch, RequestsHttpConnection
 from requests_aws4auth import AWS4Auth
 from fastapi.responses import JSONResponse
 from dotenv import load_dotenv
+from fastapi.middleware.cors import CORSMiddleware
 import os 
 
 
@@ -17,6 +18,16 @@ AWS_REGION = os.environ.get('AWS_REGION')
 AWS_SERVICE = os.environ.get('AWS_SERVICE')
 
 HOST = os.environ.get('HOST')
+
+origins = ["*"]
+ 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 awsauth = AWS4Auth(
     AWS_ACCESS_KEY,
