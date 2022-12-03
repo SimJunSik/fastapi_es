@@ -2,6 +2,7 @@ from fastapi import FastAPI
 import tweepy
 from elasticsearch import Elasticsearch, RequestsHttpConnection
 from requests_aws4auth import AWS4Auth
+from fastapi.responses import JSONResponse
 from dotenv import load_dotenv
 import os 
 
@@ -117,7 +118,20 @@ async def say_hello(keyword: str):
             ]
             }
         }
+        # "from": _from,
+        # "size": _size,
+        # "sort": [
+        #     {
+        #         "_score": "desc"
+        #     },
+        #     {
+        #         "id.keyword": "asc"
+        #     }
+        # ],
     }
 
     res = es.search(index=_index, body=doc, size=10)
-    return res['hits']['hits']
+    result = {
+        "data": res['hits']['hits']
+    }
+    return JSONResponse(content=result)
