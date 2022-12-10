@@ -6,7 +6,8 @@ from fastapi.responses import JSONResponse
 from dotenv import load_dotenv
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
-import os 
+import os
+from opensearchpy import OpenSearch
 
 
 load_dotenv()
@@ -37,7 +38,7 @@ awsauth = AWS4Auth(
     AWS_SERVICE,
 )
 
-es = Elasticsearch(
+es = OpenSearch(
     hosts = [{'host': HOST, 'port': 443}],
     http_auth = awsauth,
     use_ssl = True,
@@ -45,14 +46,8 @@ es = Elasticsearch(
     connection_class = RequestsHttpConnection,
     timeout=30, max_retries=10, retry_on_timeout=True
 )
-es = Elasticsearch(
-    hosts = [{'host': HOST, 'port': 443}],
-    http_auth = awsauth,
-    use_ssl = True,
-    verify_certs = True,
-    connection_class = RequestsHttpConnection,
-    timeout=30, max_retries=10, retry_on_timeout=True
-)
+
+print(es.info())
 
 
 class Meme(BaseModel):
@@ -65,11 +60,11 @@ class Meme(BaseModel):
 
 
 class SearchDto(BaseModel):
-    id: str = Field(title="index id")
-    index: str = Field(title="index name")
-    type: str = Field(title="index type")
-    score: float = Field(title="검색 결과 점수")
-    source: Meme = Field(title="밈 데이터")
+    id: str = Field(title="index id", description="_id")
+    index: str = Field(title="index name", description="_index")
+    type: str = Field(title="index type", description="_type")
+    score: float = Field(title="검색 결과 점수", description="_score")
+    source: Meme = Field(title="밈 데이터", description="_source")
 
 
 def create_index(_index):
@@ -120,14 +115,41 @@ def clean_data(data):
         if not d['_source']['tags']:
             d['_source']['tags'] = []
         else:
-            d['_source']['tags'] = d['_source']['tags'][0].split(",")
+            d['_source']['tags'] = d['_source']['tags'].split(",")
 
     return data
 
 
-@app.get(path="/search", description="검색 API", status_code=status.HTTP_200_OK, response_model=SearchDto)
+@app.get(path="/search", description="검색 API", status_code=status.HTTP_200_OK, response_model=SearchDto, responses={
+    200: {
+        "description": "200 응답 데이터는 data 키 안에 들어있음"
+    }
+})
 async def search(keyword: str, offset: int = 0, limit: int = 10):
     _index = "mm" # index name
+
+    # doc = {
+    #     'query': {
+    #         "match_all": {}
+    #     }
+    # }
+
+    # doc = {
+    #     'query': {
+    #         'match': {
+    #             "tags": {
+    #                 "query": keyword,
+    #                 "operator": "and"
+    #             },
+    #         },
+    #         # 'match': {
+    #         #     "title": {
+    #         #         "query": keyword,
+    #         #         "boost": 1
+    #         #     }
+    #         # }
+    #     }
+    # }
 
     doc={
         "query": {
@@ -157,16 +179,17 @@ async def search(keyword: str, offset: int = 0, limit: int = 10):
             ]
             }
         },
-        "from": offset,
-        "size": limit,
-        "sort": [
-            {
-                "_score": "desc"
-            }
-        ],
+        # "from": offset,
+        # "size": limit,
+        # "sort": [
+        #     {
+        #         "_score": "desc"
+        #     }
+        # ],
     }
 
     res = es.search(index=_index, body=doc)
+    print(res['hits']['hits'])
     result = {
         "data": clean_data(res['hits']['hits'])
     }

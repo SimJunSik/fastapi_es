@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+
+    <style>
+        .meme_image{
+            width: 400px;
+        }
+    </style>
+</head>
+<body>
+    <input id="search_input" type="text" placeholder="검색 키워드 입력"/>
+    <button id="search_button">검색</button>
+    <div id="result_list_wrapper">
+    </div>
+
+    <script>
+        document.getElementById("search_button").addEventListener("click", function(event){
+            const target = document.getElementById("search_input");
+            const value = target.value;
+            console.log(value);
+
+            fetch(`http://localhost:8100/search?keyword=${value}`)
+            .then(response => response.json())
+            .then(data_arr => {
+                document.getElementById("result_list_wrapper").innerHTML = "";
+                console.log(data_arr);
+                console.log(data_arr.data);
+                for(const key in data_arr.data){
+                    console.log(data_arr.data[key]);
+                    const meme = data_arr.data[key]._source;
+                    console.log(meme);
+                    document.getElementById("result_list_wrapper").innerHTML += `
+                        <div>
+                            <div>제목: ${meme.title}</div>
+                            <img class="meme_image" src="${meme.image_url.replace(" ", "+").replace("#", "%23")}"/>
+                        </div>
+                    `
+                }
+            });
+        });
+    </script>
+</body>
+</html>

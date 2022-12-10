@@ -1,4 +1,5 @@
 from google.cloud import vision
+from konlpy.tag import Okt
 import os
 import io
 import json
@@ -8,17 +9,35 @@ os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = 'meme-369708-e4bd2f8056f2.json'
 client = vision.ImageAnnotatorClient()
 
 # The name of the image file to annotate
-file_name = os.path.abspath('./img/263A4D3D55B585AC0C.jpeg')
+# file_name = os.path.abspath('./img/263A4D3D55B585AC0C.jpeg')
 
-# Loads the image into memory
-with io.open(file_name, 'rb') as image_file:
-    content = image_file.read()
+# # Loads the image into memory
+# with io.open(file_name, 'rb') as image_file:
+#     content = image_file.read()
 
-image = vision.Image(content=content)
+# image = vision.Image(content=content)
 
 # Performs label detection on the image file
-# response = client.text_detection(image=image)
-# print(response.text_annotations)
+dir_path = "./crawling_images/crawling_images/2022125_12958_박명수 짤/"
+
+# list to store files
+res = []
+
+# Iterate directory
+for path in os.listdir(dir_path):
+    print(path)
+
+    # check if current path is a file
+    if os.path.isfile(os.path.join(dir_path, path)):
+        res.append(path)
+
+for r in res:
+    with io.open(dir_path + r, 'rb') as image_file:
+        content = image_file.read()
+    image = vision.Image(content=content)
+    response = client.text_detection(image=image)
+    okt = Okt()
+    print(r, list(filter(lambda x: len(x) > 1, okt.nouns(response.text_annotations[0].description))))
 
 def gc_logo():
     response = client.logo_detection(image=image)
@@ -34,7 +53,7 @@ def gc_logo():
             'https://cloud.google.com/apis/design/errors'.format(
                 response.error.message))
 
-gc_logo()
+# gc_logo()
 
 
 def gc_web():

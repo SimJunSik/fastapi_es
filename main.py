@@ -1,5 +1,6 @@
+from http.client import HTTPResponse
 from typing import Union
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from pydantic import BaseModel
 from starlette import requests
 from selenium import webdriver
@@ -12,7 +13,8 @@ from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import cross_val_score
-from scipy.spatial import distance
+from fastapi.templating import Jinja2Templates
+from fastapi.responses import HTMLResponse
 
 import time
 import pickle
@@ -23,7 +25,7 @@ import matplotlib.pylab as plt
 import itertools
 
 app = FastAPI()
-
+templates = Jinja2Templates(directory='./templates/')
 
 class Item(BaseModel):
     name: str
@@ -156,3 +158,8 @@ def comp_image(img1, img2):
         ret = ret/np.sum(query)   
 
     return ret
+
+
+@app.get("/search", response_class=HTMLResponse)
+def search(request: Request):
+    return templates.TemplateResponse('search.html', context={"request": request})
