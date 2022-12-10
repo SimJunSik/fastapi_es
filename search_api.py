@@ -8,6 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 import os
 from opensearchpy import OpenSearch
+from typing import List
 
 
 load_dotenv()
@@ -56,7 +57,7 @@ class Meme(BaseModel):
     title: str = Field(title="제목")
     description: str = Field(title="설명")
     image_url: str = Field(title="이미지 URL")
-    tags: list[str] = Field(title="태그 목록")
+    tags: List[str] = Field(title="태그 목록")
 
 
 class SearchDto(BaseModel):
