@@ -1,10 +1,19 @@
-from sqlalchemy import Boolean, Column, Integer, String, DateTime, BigInteger, ForeignKey
+from sqlalchemy import (
+    Boolean,
+    Column,
+    Integer,
+    String,
+    DateTime,
+    BigInteger,
+    ForeignKey,
+)
 from pydantic import BaseModel
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
 
 
 Base = declarative_base()
+
 
 class MEME(Base):
     __tablename__ = "MEME"

@@ -15,15 +15,15 @@ load_dotenv()
 
 
 app = FastAPI()
-AWS_ACCESS_KEY = os.environ.get('AWS_ACCESS_KEY')
-AWS_SECRET_KEY = os.environ.get('AWS_SECRET_KEY')
-AWS_REGION = os.environ.get('AWS_REGION')
-AWS_SERVICE = os.environ.get('AWS_SERVICE')
+AWS_ACCESS_KEY = os.environ.get("AWS_ACCESS_KEY")
+AWS_SECRET_KEY = os.environ.get("AWS_SECRET_KEY")
+AWS_REGION = os.environ.get("AWS_REGION")
+AWS_SERVICE = os.environ.get("AWS_SERVICE")
 
-HOST = os.environ.get('HOST')
+HOST = os.environ.get("HOST")
 
 origins = ["*"]
- 
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
@@ -40,12 +40,14 @@ awsauth = AWS4Auth(
 )
 
 es = OpenSearch(
-    hosts = [{'host': HOST, 'port': 443}],
-    http_auth = awsauth,
-    use_ssl = True,
-    verify_certs = True,
-    connection_class = RequestsHttpConnection,
-    timeout=30, max_retries=10, retry_on_timeout=True
+    hosts=[{"host": HOST, "port": 443}],
+    http_auth=awsauth,
+    use_ssl=True,
+    verify_certs=True,
+    connection_class=RequestsHttpConnection,
+    timeout=30,
+    max_retries=10,
+    retry_on_timeout=True,
 )
 
 print(es.info())
@@ -69,129 +71,78 @@ class SearchDto(BaseModel):
 
 
 def create_index(_index):
-    resp = es.indices.create(index=_index, body={
-        "settings" : {
-            "index":{
-                "analysis":{
-                    "analyzer" : {
-                        "korean" : {
-                            "type" : "custom",
-                            "tokenizer" : "seunjeon"
-                        }
-                    },
-                    "tokenizer" : {
-                        "seunjeon" : {
-                            "type" : "seunjeon_tokenizer"
-                        }
+    resp = es.indices.create(
+        index=_index,
+        body={
+            "settings": {
+                "index": {
+                    "analysis": {
+                        "analyzer": {
+                            "korean": {"type": "custom", "tokenizer": "seunjeon"}
+                        },
+                        "tokenizer": {"seunjeon": {"type": "seunjeon_tokenizer"}},
                     }
                 }
-            }
-        },
-        "mappings": {
-            "properties": {
-                "description": {
-                    "type": "text",
-                    "analyzer": "korean"
-                },
-                "title": {
-                    "type": "text",
-                    "analyzer": "korean"
-                },
-                "tags": {
-                    "type": "text",
-                    "analyzer": "korean"
-                },
-                "image_url": {
-                    "type": "text"
+            },
+            "mappings": {
+                "properties": {
+                    "description": {"type": "text", "analyzer": "korean"},
+                    "title": {"type": "text", "analyzer": "korean"},
+                    "tags": {"type": "text", "analyzer": "korean"},
+                    "image_url": {"type": "text"},
                 }
-            }
-        }
-    })
+            },
+        },
+    )
 
     return resp
 
 
 def clean_data(data):
     for d in data:
-        if not d['_source']['tags']:
-            d['_source']['tags'] = []
-        else:
-            d['_source']['tags'] = d['_source']['tags'].split(",")
+        print("???", d)
+        # if not d['_source']['tags']:
+        #     d['_source']['tags'] = []
+        # else:
+        #     d['_source']['tags'] = d['_source']['tags'].split(",")
 
     return data
 
 
-@app.get(path="/search", description="검색 API", status_code=status.HTTP_200_OK, response_model=SearchDto, responses={
-    200: {
-        "description": "200 응답 데이터는 data 키 안에 들어있음"
-    }
-})
+@app.get(
+    path="/search",
+    description="검색 API",
+    status_code=status.HTTP_200_OK,
+    response_model=SearchDto,
+    responses={200: {"description": "200 응답 데이터는 data 키 안에 들어있음"}},
+)
 async def search(keyword: str, offset: int = 0, limit: int = 10):
-    _index = "mm" # index name
+    _index = "mm"  # index name
 
-    # doc = {
-    #     'query': {
-    #         "match_all": {}
-    #     }
-    # }
-
-    # doc = {
-    #     'query': {
-    #         'match': {
-    #             "tags": {
-    #                 "query": keyword,
-    #                 "operator": "and"
-    #             },
-    #         },
-    #         # 'match': {
-    #         #     "title": {
-    #         #         "query": keyword,
-    #         #         "boost": 1
-    #         #     }
-    #         # }
-    #     }
-    # }
-
-    doc={
+    doc = {
         "query": {
             "bool": {
-            "should": [
-                { "match": { 
-                    "title":  {
-                    "query": keyword,
-                    "boost": 1
-                }}},
-                { "match": { 
-                    "description":  {
-                    "query": keyword,
-                    "boost": 3
-                }}},
-                { "match": { 
-                    "tags":  {
-                    "query": keyword,
-                    "boost": 100
-                }}},
-                { "bool":  { 
-                    "should": [
-                    { "match": { "translator": "Constance Garnett" }},
-                    { "match": { "translator": "Louise Maude"      }}
-                    ]
-                }}
-            ]
+                "should": [
+                    {"match": {"title": {"query": keyword, "boost": 1}}},
+                    {"match": {"description": {"query": keyword, "boost": 3}}},
+                    {"match": {"tags": {"query": keyword, "boost": 100}}},
+                    {
+                        "bool": {
+                            "should": [
+                                {"match": {"translator": "Constance Garnett"}},
+                                {"match": {"translator": "Louise Maude"}},
+                            ]
+                        }
+                    },
+                ]
             }
         },
         # "from": offset,
         # "size": limit,
-        # "sort": [
-        #     {
-        #         "_score": "desc"
-        #     }
-        # ],
+        "sort": [{"_score": "desc"}],
     }
 
     res = es.search(index=_index, body=doc)
-    print(res['hits']['hits'])
-    result = {
-        "data": clean_data(res['hits']['hits'])
-    }
+    # print(res['hits']['hits'])
+    result = {"data": clean_data(res["hits"]["hits"])}
     return JSONResponse(content=result)

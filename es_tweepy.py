@@ -4,19 +4,20 @@ from konlpy.tag import Okt
 from elasticsearch import Elasticsearch, RequestsHttpConnection
 from requests_aws4auth import AWS4Auth
 from dotenv import load_dotenv
-import os 
+import os
 
 
 load_dotenv()
 
-class JJMemeTweepy():
+
+class JJMemeTweepy:
     def __init__(self, target_screen_name) -> None:
         self.target_screen_name = target_screen_name
-        self.consumer_key = os.environ.get('CONSUMER_KEY')
-        self.consumer_secret = os.environ.get('CONSUMER_SECRET')
-        self.access_token = os.environ.get('ACCESS_TOKEN')
-        self.access_token_secret = os.environ.get('ACCESS_TOKEN_SECRET')
-        self.bearer_token = os.environ.get('BEARER_TOKEN')
+        self.consumer_key = os.environ.get("CONSUMER_KEY")
+        self.consumer_secret = os.environ.get("CONSUMER_SECRET")
+        self.access_token = os.environ.get("ACCESS_TOKEN")
+        self.access_token_secret = os.environ.get("ACCESS_TOKEN_SECRET")
+        self.bearer_token = os.environ.get("BEARER_TOKEN")
 
     def connect_api(self):
         auth = tweepy.OAuthHandler(self.consumer_key, self.consumer_secret)
@@ -25,7 +26,7 @@ class JJMemeTweepy():
         return api
 
     def get_tweets(self, api):
-        tweets = api.user_timeline(screen_name = self.target_screen_name)
+        tweets = api.user_timeline(screen_name=self.target_screen_name)
         return tweets
 
     def get_client(self):
@@ -42,16 +43,18 @@ class JJMemeTweepy():
                 time.sleep(60 * 15)
         return t_id
 
+
 if __name__ == "__main__":
-    pass
+    okt = Okt()
+    print(okt.pos("자연스ㄷ 무한ㄷ"))
     # jj_meme = JJMemeTweepy("짤주워오는계정")
     # client = jj_meme.get_client()
     # t_id = jj_meme.get_id(screen_name='WkfxjfrP')
 
     # tweets = client.get_users_tweets(
-    #     t_id, 
-    #     expansions='attachments.media_keys', 
-    #     media_fields=['duration_ms', 'height','media_key', 'preview_image_url', 'type', 'url', 'width', 'alt_text'], 
+    #     t_id,
+    #     expansions='attachments.media_keys',
+    #     media_fields=['duration_ms', 'height','media_key', 'preview_image_url', 'type', 'url', 'width', 'alt_text'],
     #     max_results = 100
     # )
 
