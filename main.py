@@ -24,6 +24,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 from opensearchpy import OpenSearch
 from typing import List
+from collections import Counter
 
 import time
 import pickle
@@ -102,52 +103,60 @@ def create_index(_index):
         index=_index,
         body={
             "settings": {
-                    "index": {
-                        "analysis": {
-                            "analyzer": {
-                                "korean": {"type": "custom", "tokenizer": "seunjeon"},
-                                "ngram_analyzer": {
-                                    "tokenizer": "ngram_tokenizer"
-                                }
+                "index": {
+                    "analysis": {
+                        "analyzer": {
+                            "korean": {"type": "custom", "tokenizer": "seunjeon"},
+                            "ngram_analyzer": {"tokenizer": "ngram_tokenizer"},
+                        },
+                        "tokenizer": {
+                            "seunjeon": {
+                                "type": "seunjeon_tokenizer",
+                                "index_poses": [
+                                    "UNK",
+                                    "EP",
+                                    "M",
+                                    "N",
+                                    "SL",
+                                    "SH",
+                                    "SN",
+                                    "V",
+                                    "VCP",
+                                    "XP",
+                                    "XS",
+                                    "XR",
+                                ],
                             },
-                            "tokenizer": {
-                                "seunjeon": {"type": "seunjeon_tokenizer", "index_poses": ["UNK","EP","M","N","SL","SH","SN","V","VCP","XP","XS","XR"]},
-                                "ngram_tokenizer": {
-                                    "type": "ngram",
-                                    "min_gram": "1",
-                                    "max_gram": "5"
-                                }
-                            }
+                            "ngram_tokenizer": {
+                                "type": "ngram",
+                                "min_gram": "2",
+                                "max_gram": "3",
+                            },
                         },
-                        "max_ngram_diff" : "4"
-                    }
-                },
-                "mappings": {
-                    "properties": {
-                        "title": {
-                            "type": "text",
-                            "analyzer": "korean",
-                            "fields": {
-                                "ngram": {
-                                    "type": "text",
-                                    "analyzer": "ngram_analyzer"
-                                }
-                            }
-                        },
-                        "tags": {
-                            "type": "text",
-                            "analyzer": "korean",
-                            "fields": {
-                                "ngram": {
-                                    "type": "text",
-                                    "analyzer": "ngram_analyzer"
-                                }
-                            }
-                        },
-                        "image_url": {"type": "text"}
-                    }
+                    },
+                    "max_ngram_diff": "4",
                 }
             },
+            "mappings": {
+                "properties": {
+                    "title": {
+                        "type": "text",
+                        "analyzer": "korean",
+                        "fields": {
+                            "ngram": {"type": "text", "analyzer": "ngram_analyzer"}
+                        },
+                    },
+                    "tags": {
+                        "type": "text",
+                        "analyzer": "korean",
+                        "fields": {
+                            "ngram": {"type": "text", "analyzer": "ngram_analyzer"}
+                        },
+                    },
+                    "image_url": {"type": "text"},
+                }
+            },
+        },
     )
 
     return resp
@@ -168,6 +177,46 @@ def clean_data(data):
 @app.get("/search_page", response_class=HTMLResponse)
 def search(request: Request):
     return templates.TemplateResponse("search.html", context={"request": request})
+
+
+def get_word_count(data, target_tag):
+    tags = []
+    for d in data:
+        tags.extend(d['tags'])
+    counter_dict = Counter(tags)
+
+    del counter_dict[target_tag]
+    return counter_dict
+
+
+@app.get("/recommend_tags")
+def recommend_tags(tag: str):
+    _index = "meme"
+
+    doc = {
+        "query": {
+            "bool": {
+                "should": [
+                    {"match": {"tags": {"query": tag}}},
+                    {
+                        "bool": {
+                            "should": [
+                                {"match": {"translator": "Constance Garnett"}},
+                                {"match": {"translator": "Louise Maude"}},
+                            ]
+                        }
+                    },
+                ]
+            },
+        }
+    }
+
+    res = es.search(index=_index, body=doc)
+    # print(res['hits']['hits'])
+    data = get_word_count(clean_data(res["hits"]["hits"]), tag)
+    data = dict(sorted(data.items(), key=lambda item: item[1], reverse=True))
+    result = {"data": data}
+    return JSONResponse(content=result)
 
 
 @app.get(
@@ -202,22 +251,22 @@ async def search(keyword: str, offset: int = 0, limit: int = 20):
             #                 }
             #             }
             #         },
-                    # {
-                    #     "bool": {
-                    #         "should": [
-                    #             {"match": {"translator": "Constance Garnett"}},
-                    #             {"match": {"translator": "Louise Maude"}},
-                    #         ]
-                    #     }
-                    # },
+            #         {
+            #             "bool": {
+            #                 "should": [
+            #                     {"match": {"translator": "Constance Garnett"}},
+            #                     {"match": {"translator": "Louise Maude"}},
+            #                 ]
+            #             }
+            #         },
             #     ]
             # },
             "bool": {
-                "should" : [
-                    {"term" : { "title" : keyword } },
-                    {"match_phrase" : { "title.ngram" : keyword } },
-                    {"term" : { "tags" : keyword } },
-                    {"match_phrase" : { "tags.ngram" : keyword } },
+                "should": [
+                    {"term": {"title": keyword}},
+                    {"match_phrase": {"title.ngram": keyword}},
+                    {"term": {"tags": keyword}},
+                    {"match_phrase": {"tags.ngram": keyword}},
                     {
                         "bool": {
                             "should": [
@@ -227,7 +276,7 @@ async def search(keyword: str, offset: int = 0, limit: int = 20):
                         }
                     },
                 ],
-                "minimum_should_match" : 1
+                "minimum_should_match": 1,
             }
         },
         "from": offset,
