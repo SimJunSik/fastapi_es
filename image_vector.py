@@ -6,7 +6,6 @@ from keras_preprocessing import image
 from opensearchpy import OpenSearch, RequestsHttpConnection
 from dotenv import load_dotenv
 from requests_aws4auth import AWS4Auth
-from imagehash import phash
 
 import os
 
