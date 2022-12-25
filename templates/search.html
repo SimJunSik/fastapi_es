@@ -24,7 +24,7 @@
             const value = target.value;
             console.log(value);
 
-            fetch(`http://localhost:8000/search?keyword=${value}`)
+            fetch(`http://3.223.98.170:8000/search?keyword=${value}`)
             .then(response => response.json())
             .then(data_arr => {
                 document.getElementById("result_list_wrapper").innerHTML = "";
