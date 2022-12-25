@@ -1,39 +1,21 @@
-from http.client import HTTPResponse
-from typing import Union
 from fastapi import FastAPI, Request
 from pydantic import BaseModel
-from starlette import requests
-from selenium import webdriver
 from selenium.webdriver.common.by import By
-from fake_useragent import UserAgent
 from selenium.webdriver.chrome.options import Options
-from urllib import request
 from skimage.metrics import structural_similarity as ssim
-from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import StandardScaler
-from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import cross_val_score
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse
 from fastapi import FastAPI, status
-from elasticsearch import Elasticsearch, RequestsHttpConnection
 from requests_aws4auth import AWS4Auth
 from fastapi.responses import JSONResponse
 from dotenv import load_dotenv
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
-from opensearchpy import OpenSearch
+from opensearchpy import OpenSearch, RequestsHttpConnection
 from typing import List
 from collections import Counter
 
-import time
-import pickle
-import os
-import cv2
-import numpy as np
-import matplotlib.pylab as plt
-import itertools
-import tweepy
 import os
 
 
@@ -189,7 +171,7 @@ def get_word_count(data, target_tag):
     return counter_dict
 
 
-@app.get("/recommend_tags")
+@app.get("/recommend-tags")
 def recommend_tags(tag: str):
     _index = "meme"
 
@@ -226,46 +208,18 @@ def recommend_tags(tag: str):
     response_model=Meme,
     responses={200: {"description": "200 응답 데이터는 data 키 안에 들어있음"}},
 )
-async def search(keyword: str, offset: int = 0, limit: int = 20):
+async def search(keyword: str, offset: int = 0, limit: int = 30):
     _index = "meme"  # index name
 
     doc = {
         "query": {
-            # "bool": {
-            #     "should": [
-            #         {"match": {"title": {"query": keyword, "boost": 1}}},
-            #         {"match": {"tags": {"query": keyword, "boost": 100}}},
-            #         {
-            #             "match": {
-            #                 "tags.with_whitespace_reverse": {
-            #                     "query": keyword,
-            #                     "boost": 100,
-            #                 }
-            #             }
-            #         },
-            #         {
-            #             "match": {
-            #                 "tags.with_whitespace_reverse": {
-            #                     "query": keyword,
-            #                     "boost": 100,
-            #                 }
-            #             }
-            #         },
-            #         {
-            #             "bool": {
-            #                 "should": [
-            #                     {"match": {"translator": "Constance Garnett"}},
-            #                     {"match": {"translator": "Louise Maude"}},
-            #                 ]
-            #             }
-            #         },
-            #     ]
-            # },
             "bool": {
                 "should": [
-                    {"term": {"title": keyword}},
+                    {"match": {"title": {"query": keyword, "operator": "and"}}},
+                    {"match": {"tags": {"query": keyword, "operator": "and"}}},
+                    {"match": {"title": {"query": keyword, "operator": "or"}}},
+                    {"match": {"tags": {"query": keyword, "operator": "or"}}},
                     {"match_phrase": {"title.ngram": keyword}},
-                    {"term": {"tags": keyword}},
                     {"match_phrase": {"tags.ngram": keyword}},
                     {
                         "bool": {
@@ -281,7 +235,7 @@ async def search(keyword: str, offset: int = 0, limit: int = 20):
         },
         "from": offset,
         "size": limit,
-        # "sort": [{"_score": "desc"}],
+        "sort": [{"_score": "desc"}],
     }
 
     res = es.search(index=_index, body=doc)
