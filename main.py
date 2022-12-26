@@ -21,7 +21,7 @@ import os
 
 
 app = FastAPI()
-logger.add("search_log_{time}", rotation="12:00", compression="zip")
+logger.add("logs/search_log_{time}", rotation="12:00", compression="zip")
 templates = Jinja2Templates(directory="./templates/")
 
 
@@ -249,3 +249,22 @@ async def search(request: Request, keyword: str, offset: int = 0, limit: int = 3
     # print(res['hits']['hits'])
     result = {"data": clean_data(res["hits"]["hits"])}
     return JSONResponse(content=result)
+
+
+@app.get(path="/log-viewer")
+async def log_viewer(request: Request):
+    return templates.TemplateResponse("log_viewer.html", context={"request": request})
+
+
+@app.get(path="/log")
+async def get_logs(request: Request):
+    logs = []
+
+    dir_path = "./logs/"
+    for path in os.listdir(dir_path):
+        with open(dir_path + path,"rt") as f:
+            lines = f.readlines()
+            for line in lines:
+                logs.append(line)
+
+    return logs
