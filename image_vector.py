@@ -76,7 +76,7 @@ def vectorize(filepath):
 def index_to_vector(info, vector):
     index = "vector-test"
     doc = {
-        # 'productInfo': info,
+        'productInfo': info,
         'vector': vector
     }
 
@@ -87,14 +87,12 @@ def index_to_vector(info, vector):
 def search_for_vector(vector):
     index = "vector-test"
     body = {
+        "size": 20,
         "query": {
-            "script_score": {
-                "query": {"match_all": {}},
-                "script": {
-                    "source": "1 / (1 + l2norm(params.query_vector, doc['vector']))",
-                    "params": {
-                        "query_vector": vector
-                    }
+            "knn": {
+                "vector": {
+                    "vector": vector,
+                    "k": 20
                 }
             }
         }
@@ -120,8 +118,17 @@ if __name__ == "__main__":
         if os.path.isfile(os.path.join(dir_path, path)):
             images.append(path)
 
-    for img in images:
-        vector = vectorize(dir_path + img)
-        print(img, vector)
-        index_to_vector(img, vector)
-        break
+    # for img in images:
+    #     vector = vectorize(dir_path + img)
+    #     print(img, vector)
+    #     index_to_vector(img, vector)
+
+    # vector = vectorize("./crawling_images/crawling_images/2022125_15556_루피 짤/106.jpg")
+    # vector = vectorize("./crawling_images/crawling_images/2022125_14551_페페 짤/015.jpg")
+    vector = vectorize("./img/똘페2.jpeg")
+    # vector = vectorize("./crawling_images/crawling_images/20221210_13189_어몽어스 짤/018.jpg")
+    result = search_for_vector(vector)
+
+    for data in result:
+        # print(data['_source']['productInfo'])
+        print(data['_score'], data['_source']['productInfo'])

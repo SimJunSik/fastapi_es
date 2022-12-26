@@ -69,6 +69,8 @@ class Meme(BaseModel):
     title: str = Field(title="제목")
     image_url: str = Field(title="이미지 URL")
     tags: List[str] = Field(title="태그 목록")
+    view_count: int = Field(title="조회수")
+    share_count: int = Field(title="공유수")
     timestamp: str = Field(title="생성일")
 
 
@@ -156,7 +158,7 @@ def clean_data(data):
     return data
 
 
-@app.get("/search_page", response_class=HTMLResponse)
+@app.get("/search-page", response_class=HTMLResponse)
 def search(request: Request):
     return templates.TemplateResponse("search.html", context={"request": request})
 
