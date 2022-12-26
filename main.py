@@ -15,11 +15,13 @@ from pydantic import BaseModel, Field
 from opensearchpy import OpenSearch, RequestsHttpConnection
 from typing import List
 from collections import Counter
+from loguru import logger
 
 import os
 
 
 app = FastAPI()
+logger.add("search_log_{time}", rotation="12:00", compression="zip")
 templates = Jinja2Templates(directory="./templates/")
 
 
@@ -211,7 +213,9 @@ def recommend_tags(tag: str):
     response_model=Meme,
     responses={200: {"description": "200 응답 데이터는 data 키 안에 들어있음"}},
 )
-async def search(keyword: str, offset: int = 0, limit: int = 30):
+async def search(request: Request, keyword: str, offset: int = 0, limit: int = 30):
+    logger.info(f"[{request.client.host}] keyword: {keyword}")
+
     _index = "meme"  # index name
 
     doc = {
