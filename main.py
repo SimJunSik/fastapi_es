@@ -71,7 +71,8 @@ class Meme(BaseModel):
     tags: List[str] = Field(title="태그 목록")
     view_count: int = Field(title="조회수")
     share_count: int = Field(title="공유수")
-    timestamp: str = Field(title="생성일")
+    create_date: str = Field(title="생성일")
+    modified_date: str = Field(title="수정일")
 
 
 class SearchDto(BaseModel):
