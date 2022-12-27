@@ -20,8 +20,12 @@ class MEME(Base):
     meme_id = Column(Integer, primary_key=True, index=True)
     title = Column(String(), nullable=False)
     image_url = Column(String(), nullable=False)
+    image_width = Column(Integer, default=0)
+    image_height = Column(Integer, default=0)
     view_count = Column(Integer, default=0)
+    share_count = Column(Integer, default=0)
     create_date = Column(DateTime)
+    modified_date = Column(DateTime)
 
 
 class TAG(Base):

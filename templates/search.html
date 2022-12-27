@@ -24,7 +24,7 @@
             const value = target.value;
             console.log(value);
 
-            fetch(`http://54.172.84.161:8000/search?keyword=${value}`)
+            fetch(`http://localhost:8000/search?keyword=${value}`)
             .then(response => response.json())
             .then(data_arr => {
                 document.getElementById("result_list_wrapper").innerHTML = "";
@@ -37,7 +37,7 @@
                     document.getElementById("result_list_wrapper").innerHTML += `
                         <div>
                             <div>제목: ${meme.title}</div>
-                            <img class="meme_image" src="${meme.image_url.replace(" ", "+").replace("#", "%23")}"/>
+                            <img class="meme_image" src="${meme.image_url}"/>
                         </div>
                     `
                 }

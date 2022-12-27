@@ -70,6 +70,8 @@ class Meme(BaseModel):
     id: int = Field(title="RDS id")
     title: str = Field(title="제목")
     image_url: str = Field(title="이미지 URL")
+    image_width: int = Field("이미지 가로 길이")
+    image_height: int = Field("이미지 세로 길이")
     tags: List[str] = Field(title="태그 목록")
     view_count: int = Field(title="조회수")
     share_count: int = Field(title="공유수")
