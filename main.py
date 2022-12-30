@@ -253,6 +253,45 @@ async def search(request: Request, keyword: str, offset: int = 0, limit: int = 3
     return JSONResponse(content=result)
 
 
+@app.get(
+    path="/search/tag",
+    description="태그 검색 API",
+    status_code=status.HTTP_200_OK,
+    response_model=Meme,
+    responses={200: {"description": "200 응답 데이터는 data 키 안에 들어있음"}},
+)
+async def search_by_tag(request: Request, keyword: str, offset: int = 0, limit: int = 30):
+    logger.info(f"[{request.client.host}] keyword: {keyword}")
+
+    _index = "meme"  # index name
+
+    doc = {
+        "query": {
+            "bool": {
+                "should": [
+                    {"match": {"tags": {"query": keyword}}},
+                    {
+                        "bool": {
+                            "should": [
+                                {"match": {"translator": "Constance Garnett"}},
+                                {"match": {"translator": "Louise Maude"}},
+                            ]
+                        }
+                    },
+                ]
+            }
+        },
+        "from": offset,
+        "size": limit,
+        "sort": [{"_score": "desc"}],
+    }
+
+    res = es.search(index=_index, body=doc)
+    # print(res['hits']['hits'])
+    result = {"data": clean_data(res["hits"]["hits"])}
+    return JSONResponse(content=result)
+
+
 @app.get(path="/log-viewer")
 async def log_viewer(request: Request):
     return templates.TemplateResponse("log_viewer.html", context={"request": request})
