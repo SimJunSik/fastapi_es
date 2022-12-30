@@ -19,7 +19,7 @@
     </div>
 
     <script>
-        document.getElementById("search_button").addEventListener("click", function(event){
+        function search(){
             const target = document.getElementById("search_input");
             const value = target.value;
             console.log(value);
@@ -42,6 +42,16 @@
                     `
                 }
             });
+        }
+
+        document.getElementById("search_button").addEventListener("click", function(event){
+            search();
+        });
+
+        document.addEventListener("keyup", function(event) {
+            if (event.keyCode === 13) {
+                search();
+            }
         });
     </script>
 </body>
