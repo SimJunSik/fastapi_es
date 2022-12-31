@@ -2,8 +2,6 @@ from fastapi import FastAPI, Request
 from pydantic import BaseModel
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
-from skimage.metrics import structural_similarity as ssim
-from sklearn.model_selection import cross_val_score
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse
 from fastapi import FastAPI, status
@@ -224,8 +222,8 @@ async def search(request: Request, keyword: str, offset: int = 0, limit: int = 3
         "query": {
             "bool": {
                 "should": [
-                    {"match": {"title": {"query": keyword, "operator": "and"}}},
-                    {"match": {"tags": {"query": keyword, "operator": "and"}}},
+                    {"match": {"title": {"query": keyword, "operator": "and", "boost": 3}}},
+                    {"match": {"tags": {"query": keyword, "operator": "and", "boost": 3}}},
                     {"match": {"title": {"query": keyword, "operator": "or"}}},
                     {"match": {"tags": {"query": keyword, "operator": "or"}}},
                     {"match_phrase": {"title.ngram": keyword}},
